@@ -17,7 +17,7 @@ var MovieList = require('./components/MovieList')
 var NoCurrentMovie = require('./components/NoCurrentMovie')
 var SortBar = require('./components/SortBar')
 
-// There should really be some JSON-formatted data in movies.json, instead of an empty array.
+// DONE --- There should really be some JSON-formatted data in movies.json, instead of an empty array.
 // I started writing this command to extract the data from the learn-sql workspace
 // on C9, but it's not done yet :) You must have the csvtojson command installed on your
 // C9 workspace for this to work.
@@ -27,8 +27,8 @@ var SortBar = require('./components/SortBar')
 // Firebase configuration
 var Rebase = require('re-base')
 var base = Rebase.createClass({
-  apiKey: "AIzaSyAzzJAUc6NTXSi3l7kPsnDHkpHdrFUEums",   // replace with your Firebase application's API key
-  databaseURL: "https://final-97a0d.firebaseio.com/", // replace with your Firebase application's database URL
+  apiKey: "AIzaSyAzzJAUc6NTXSi3l7kPsnDHkpHdrFUEums",   // DONE --- replace with your Firebase application's API key
+  databaseURL: "https://final-97a0d.firebaseio.com/", // DONE --- replace with your Firebase application's database URL
 })
 
 var App = React.createClass({
@@ -57,8 +57,15 @@ var App = React.createClass({
     // sorted A-Z), or "map" (the data visualized)
     // We should probably do the sorting and setting of movies in state here.
     // You should really look at https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+    var sortedmovies = this.state.movies
+      if (view==='alpha') {
+        sortedmovies = movieData.sort(this.movieCompareByTitle)
+      } else if (view==='latest') {
+        sortedmovies = movieData.sort(this.movieCompareByReleased)
+      }
     this.setState({
-      currentView: view
+      currentView: view,
+      movies: sortedmovies
     })
   },
   renderMovieDetails: function() {
@@ -73,7 +80,20 @@ var App = React.createClass({
     if (this.state.currentView === 'map') {
       return (
         <div className="col-sm-12">
-          <h3>This would be an awfully good place to put a map.</h3>
+          <h3>Theatres Near You</h3>
+          <Gmaps width={'100%'}
+                 height={'480px'}
+                 lat={'41.9021988'}
+                 lng={'-87.6285782'}
+                 zoom={11}
+                 loadingMessage={'Theatres soon...'}
+                 params={{v: '3.exp', key: 'AIzaSyB3p_xQIXsFMDGLYNEiVkgW5fsVSUOd01c'}}>
+            {theatres.map(function(place) {
+                   // the term in the () on line 18 is an arbitrary name... we can call it whatever we want //
+                   //...since it's on line 18, we put it below in line 21 //
+            return <Marker lat={place.lat} lng={place.long} />
+            })}
+          </Gmaps>
         </div>
       )
     } else {
@@ -113,13 +133,13 @@ var App = React.createClass({
   componentDidMount: function() {
     // We'll need to enter our Firebase configuration at the top of this file and
     // un-comment this to make the Firebase database work
-    // base.syncState('/movies', { context: this, state: 'movies', asArray: true })
+    base.syncState('/movies', { context: this, state: 'movies', asArray: true })
   },
   render: function() {
     return (
       <div>
         <Header currentUser={this.state.currentUser} />
-        <SortBar movieCount={this.state.movies.length} viewChanged={this.viewChanged} />
+        <SortBar movieCount={this.state.movies.length} currentView={this.state.currentView} viewChanged={this.viewChanged} />
         <div className="main row">
           {this.renderMainSection()}
         </div>
